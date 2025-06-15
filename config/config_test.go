@@ -14,6 +14,7 @@
 package config
 
 import (
+	"os"
 	"strings"
 	"testing"
 
@@ -244,5 +245,41 @@ func TestNewCELProgram(t *testing.T) {
 				return
 			}
 		})
+	}
+}
+
+func TestExpandEnv(t *testing.T) {
+	// 设置测试环境变量
+	os.Setenv("TEST_ENV_VAR", "test_value")
+	defer os.Unsetenv("TEST_ENV_VAR")
+
+	// 测试用例
+	testCases := []struct {
+		input    string
+		expected string
+	}{
+		{
+			input:    "${TEST_ENV_VAR}",
+			expected: "test_value",
+		},
+		{
+			input:    "prefix_${TEST_ENV_VAR}_suffix",
+			expected: "prefix_test_value_suffix",
+		},
+		{
+			input:    "${NONEXISTENT_VAR}",
+			expected: "",
+		},
+		{
+			input:    "no_variables_here",
+			expected: "no_variables_here",
+		},
+	}
+
+	for _, tc := range testCases {
+		result := os.ExpandEnv(tc.input)
+		if result != tc.expected {
+			t.Errorf("ExpandEnv(%q) = %q, want %q", tc.input, result, tc.expected)
+		}
 	}
 }
